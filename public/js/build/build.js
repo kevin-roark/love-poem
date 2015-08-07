@@ -45334,7 +45334,9 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
 
     _get(Object.getPrototypeOf(MainScene.prototype), "constructor", this).call(this, renderer, camera, scene, options);
 
-    this.name = "SHEEN";
+    this.name = "[love]-[poem]";
+
+    this.text = "It's so nice<br>" + "to wake up in the morning<br>" + " all alone<br>" + "and not have to tell somebody<br>" + " you love them<br>" + "when you don't love them<br>" + " any more.";
   }
 
   _inherits(MainScene, _SheenScene);
@@ -45348,6 +45350,10 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
         _get(Object.getPrototypeOf(MainScene.prototype), "enter", this).call(this);
 
         this.renderer.setClearColor(0, 1);
+
+        this.poemDiv = $("<div class=\"plaintext-poem\"></div>");
+        this.poemDiv.html(this.text);
+        this.domContainer.append(this.poemDiv);
 
         // add shit to your scene
       }
@@ -45364,6 +45370,8 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
         _get(Object.getPrototypeOf(MainScene.prototype), "exit", this).call(this);
 
         this.renderer.setClearColor(16777215, 1);
+
+        this.poemDiv.remove();
 
         // remove all your scene-specific stuff
       }

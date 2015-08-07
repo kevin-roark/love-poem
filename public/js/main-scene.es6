@@ -12,7 +12,15 @@ export class MainScene extends SheenScene {
   constructor(renderer, camera, scene, options) {
     super(renderer, camera, scene, options);
 
-    this.name = "SHEEN";
+    this.name = "[love]-[poem]";
+
+    this.text = "It's so nice<br>" +
+                "to wake up in the morning<br>" +
+                " all alone<br>" +
+                "and not have to tell somebody<br>" +
+                " you love them<br>" +
+                "when you don't love them<br>" +
+                " any more.";
   }
 
   /// Overrides
@@ -21,6 +29,10 @@ export class MainScene extends SheenScene {
     super.enter();
 
     this.renderer.setClearColor(0x000000, 1);
+
+    this.poemDiv = $('<div class="plaintext-poem"></div>');
+    this.poemDiv.html(this.text);
+    this.domContainer.append(this.poemDiv);
 
     // add shit to your scene
   }
@@ -35,6 +47,8 @@ export class MainScene extends SheenScene {
     super.exit();
 
     this.renderer.setClearColor(0xffffff, 1);
+
+    this.poemDiv.remove();
 
     // remove all your scene-specific stuff
   }
