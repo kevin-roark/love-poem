@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+
+    <link rel="stylesheet" href="css/main.css">
+
+    <link rel="icon" type="image/png" href="/favicon.png?v=1.0">
+
+    <title>second shane</title>
+
+    <meta property="og:title" content=""/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:image" content=""/>
+    <meta property="og:description" content=""/>
+    <meta property="og:url" content=""/>
+    <meta property="fb:admins" content="100000919641751"/>
+</head>
+<body>
+    <!-- content -->
+
+    <div class="webgl-error">plz upgrade browser</div>
+
+    <div id="scene-overlay"></div>
+
+    <!-- shaders -->
+
+    <script type="x-shader/x-vertex" id="skyVertexShader">
+			varying vec3 vWorldPosition;
+
+			void main() {
+				vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
+				vWorldPosition = worldPosition.xyz;
+
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+			}
+		</script>
+
+		<script type="x-shader/x-fragment" id="skyFragmentShader">
+			uniform vec3 topColor;
+			uniform vec3 bottomColor;
+			uniform float offset;
+			uniform float exponent;
+
+			varying vec3 vWorldPosition;
+
+			void main() {
+				float h = normalize( vWorldPosition + offset ).y;
+				gl_FragColor = vec4( mix( bottomColor, topColor, max( pow( max( h , 0.0), exponent ), 0.0 ) ), 1.0 );
+			}
+		</script>
+
+    <!-- scripts -->
+
+    <script src="js/build/build.js"></script>
+</body>
+</html>
