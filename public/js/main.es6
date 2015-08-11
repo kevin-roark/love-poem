@@ -1,6 +1,7 @@
 
 let $ = require('jquery');
 let THREE = require('three');
+let Physijs = require('./lib/physi.js');
 
 import {ThreeBoiler} from './three-boiler.es6';
 import {MainScene} from './main-scene.es6';
@@ -33,8 +34,23 @@ class Sheen extends ThreeBoiler {
     this.mainScene = new MainScene(this.renderer, this.camera, this.scene, {});
   }
 
+  createScene() {
+    var scene = new Physijs.Scene();
+
+    scene.setGravity(new THREE.Vector3(0, -100, 0));
+
+    scene.addEventListener('update', function() {
+      // here wanna apply new forces to objects and things based on state
+      scene.simulate(undefined, 1);
+    });
+
+    return scene;
+  }
+
   activate() {
     super.activate();
+
+    this.scene.simulate();
 
     this.mainScene.startScene();
   }

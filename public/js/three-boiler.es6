@@ -19,7 +19,7 @@ export class ThreeBoiler {
     this.renderer.setClearColor(0xffffff, 1);
     document.body.appendChild(this.renderer.domElement);
 
-    this.scene = new THREE.Scene();
+    this.scene = this.createScene();
 
     this.camera = this.createCamera();
     this.scene.add(this.camera);
@@ -31,6 +31,10 @@ export class ThreeBoiler {
     this.resize();
 
     $('body').keypress((ev) => {this.keypress(ev.which);});
+  }
+
+  createScene() {
+    return new THREE.Scene();
   }
 
   createCamera() {
