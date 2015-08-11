@@ -37,7 +37,7 @@ class Sheen extends ThreeBoiler {
   createScene() {
     var scene = new Physijs.Scene();
 
-    scene.setGravity(new THREE.Vector3(0, -100, 0));
+    scene.setGravity(new THREE.Vector3(0, -5, 0));
 
     scene.addEventListener('update', function() {
       // here wanna apply new forces to objects and things based on state

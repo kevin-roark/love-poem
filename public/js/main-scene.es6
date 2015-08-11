@@ -1,5 +1,6 @@
 
 let THREE = require('three');
+let Physijs = require('./lib/physi.js');
 let $ = require('jquery');
 
 import {SheenScene} from './sheen-scene.es6';
@@ -21,6 +22,8 @@ export class MainScene extends SheenScene {
                 " you love them<br>" +
                 "when you don't love them<br>" +
                 " any more.";
+
+    this.goldBars = [];
   }
 
   /// Overrides
@@ -40,7 +43,19 @@ export class MainScene extends SheenScene {
   doTimedWork() {
     super.doTimedWork();
 
-    // setup all of the timeout based events
+    setInterval(() => {
+      var goldbar = new GoldBar({
+        position: randomGoldPosition(),
+
+        collisionHandler: () => {
+          console.log('collision!');
+        }
+      });
+
+      goldbar.addTo(this.scene);
+
+      this.goldBars.push(goldbar);
+    }, 2000);
   }
 
   exit() {
@@ -49,6 +64,11 @@ export class MainScene extends SheenScene {
     this.renderer.setClearColor(0xffffff, 1);
 
     this.poemDiv.remove();
+
+    this.goldBars.forEach((goldbar) => {
+      goldbar.removeFrom(this.scene);
+    });
+    this.goldBars = [];
 
     // remove all your scene-specific stuff
   }
@@ -62,7 +82,38 @@ export class MainScene extends SheenScene {
   update() {
     super.update();
 
-    // custom update werk
+    this.goldBars.forEach((goldbar) => {
+      goldbar.update();
+    });
   }
 
+}
+
+class GoldBar extends SheenMesh {
+  constructor(options) {
+    options.meshCreator = (callback) => {
+      var geometry = new THREE.BoxGeometry(2, 2, 2);
+
+      var rawMaterial = new THREE.MeshBasicMaterial({
+        color: 0xf9d902,
+        side: THREE.DoubleSide
+      });
+
+      // give decent average values for friction and restitution
+      var material = Physijs.createMaterial(rawMaterial, 0.4, 0.6);
+
+      var mesh = new Physijs.BoxMesh(geometry, material, 5);
+
+      callback(geometry, material, mesh);
+    };
+
+    super(options);
+  }
+}
+
+function randomGoldPosition() {
+  var x = -20 + Math.random() * 40;
+  var y = Math.random() * 30;
+  var z = -30 + Math.random() * -40;
+  return new THREE.Vector3(x, y, z);
 }

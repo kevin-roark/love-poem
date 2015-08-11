@@ -22,6 +22,8 @@ function SheenMesh(options) {
 
   this.ignorePhysics = options.ignorePhysics;
   this.mass = options.mass || 20;
+  this.friction = options.friction || 0.4;
+  this.restitution = options.restitution || 0.6;
   this.collisionHandler = options.collisionHandler;
 
   this.melting = false;
@@ -95,12 +97,14 @@ SheenMesh.prototype.createMesh = function(callback) {
       self.geometry = geometry;
 
       self.materials = materials;
-      self.material = new THREE.MeshFaceMaterial(materials);
+      self.faceMaterial = new THREE.MeshFaceMaterial(materials);
 
       if (self.ignorePhysics) {
+        self.material = self.faceMaterial;
         self.mesh = new THREE.Mesh(geometry, self.material);
       }
       else {
+        self.material = Physijs.createMaterial(self.faceMaterial, this.friction, this.restitution);
         self.mesh = new Physijs.ConvexMesh(geometry, self.material, self.mass);
       }
 
