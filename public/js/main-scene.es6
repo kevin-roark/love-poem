@@ -65,16 +65,35 @@ export class MainScene extends SheenScene {
     });
 
     this.makeLights();
+
+    this.goldFrequency = 3000;
   }
 
   doTimedWork() {
     super.doTimedWork();
 
-    setInterval(() => {
-      var goldbar = createGoldBar();
-      goldbar.addTo(this.scene);
-      this.goldBars.push(goldbar);
+    setTimeout(() => {
+      this.addGoldBar();
     }, 1000);
+  }
+
+  addGoldBar() {
+    let goldbarCount = this.goldBars.length;
+    let minScale = 0.6;
+    let maxScale = Math.max(1.0, Math.min(1.65, (goldbarCount + 22) / 22));
+    let scale = minScale + Math.random() * (maxScale - minScale);
+
+    let goldbar = createGoldBar(scale);
+    goldbar.addTo(this.scene);
+    this.goldBars.push(goldbar);
+
+    setTimeout(() => {
+      if (this.goldFrequency > 200) {
+        this.goldFrequency *= 0.972;
+      }
+
+      this.addGoldBar();
+    }, this.goldFrequency);
   }
 
   exit() {
@@ -100,18 +119,8 @@ export class MainScene extends SheenScene {
     this.scene.remove(this.backLight);
   }
 
-  resize() {
-    if (this.active) {
-      // custom dom layout etc
-    }
-  }
-
   update() {
     super.update();
-
-    this.goldBars.forEach((goldbar) => {
-      goldbar.update();
-    });
   }
 
   // Creation
@@ -153,7 +162,7 @@ export class MainScene extends SheenScene {
 
 }
 
-function createGoldBar() {
+function createGoldBar(scale) {
   return new SheenMesh({
     meshCreator: (callback) => {
       let geometry = new THREE.BoxGeometry(7, 3.625, 1.75);
@@ -166,7 +175,7 @@ function createGoldBar() {
       let rawMaterial = new THREE.MeshPhongMaterial({
         map: texture,
 
-        specular: 0xf9d902,
+        specular: 0xf9d913,
         shininess: 100,
 
         side: THREE.DoubleSide
@@ -183,7 +192,7 @@ function createGoldBar() {
 
     position: randomGoldPosition(),
 
-    scale: 1.5,
+    scale: scale,
 
     collisionHandler: () => {
       //console.log('gold collision!');
@@ -192,7 +201,7 @@ function createGoldBar() {
 
   function randomGoldPosition() {
     var x = -GoldBarXLimit + Math.random() * (GoldBarXLimit * 2);
-    var y = Math.random() * (WallHeight - 5);
+    var y = 10 + Math.random() * (WallHeight - FenceBuffer - 10);
     var z = -GoldBarMinZ - Math.random() * GoldBarZRange;
     return new THREE.Vector3(x, y, z);
   }

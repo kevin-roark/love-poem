@@ -46709,6 +46709,8 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
         });
 
         this.makeLights();
+
+        this.goldFrequency = 3000;
       }
     },
     doTimedWork: {
@@ -46717,11 +46719,31 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
 
         _get(Object.getPrototypeOf(MainScene.prototype), "doTimedWork", this).call(this);
 
-        setInterval(function () {
-          var goldbar = createGoldBar();
-          goldbar.addTo(_this.scene);
-          _this.goldBars.push(goldbar);
+        setTimeout(function () {
+          _this.addGoldBar();
         }, 1000);
+      }
+    },
+    addGoldBar: {
+      value: function addGoldBar() {
+        var _this = this;
+
+        var goldbarCount = this.goldBars.length;
+        var minScale = 0.6;
+        var maxScale = Math.max(1, Math.min(1.65, (goldbarCount + 22) / 22));
+        var scale = minScale + Math.random() * (maxScale - minScale);
+
+        var goldbar = createGoldBar(scale);
+        goldbar.addTo(this.scene);
+        this.goldBars.push(goldbar);
+
+        setTimeout(function () {
+          if (_this.goldFrequency > 200) {
+            _this.goldFrequency *= 0.972;
+          }
+
+          _this.addGoldBar();
+        }, this.goldFrequency);
       }
     },
     exit: {
@@ -46750,18 +46772,9 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
         this.scene.remove(this.backLight);
       }
     },
-    resize: {
-      value: function resize() {
-        if (this.active) {}
-      }
-    },
     update: {
       value: function update() {
         _get(Object.getPrototypeOf(MainScene.prototype), "update", this).call(this);
-
-        this.goldBars.forEach(function (goldbar) {
-          goldbar.update();
-        });
       }
     },
     makeLights: {
@@ -46808,7 +46821,7 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
   return MainScene;
 })(SheenScene);
 
-function createGoldBar() {
+function createGoldBar(scale) {
   return new SheenMesh({
     meshCreator: function (callback) {
       var geometry = new THREE.BoxGeometry(7, 3.625, 1.75);
@@ -46821,7 +46834,7 @@ function createGoldBar() {
       var rawMaterial = new THREE.MeshPhongMaterial({
         map: texture,
 
-        specular: 16374018,
+        specular: 16374035,
         shininess: 100,
 
         side: THREE.DoubleSide
@@ -46838,14 +46851,14 @@ function createGoldBar() {
 
     position: randomGoldPosition(),
 
-    scale: 1.5,
+    scale: scale,
 
     collisionHandler: function () {}
   });
 
   function randomGoldPosition() {
     var x = -GoldBarXLimit + Math.random() * (GoldBarXLimit * 2);
-    var y = Math.random() * (WallHeight - 5);
+    var y = 10 + Math.random() * (WallHeight - FenceBuffer - 10);
     var z = -GoldBarMinZ - Math.random() * GoldBarZRange;
     return new THREE.Vector3(x, y, z);
   }
@@ -46947,8 +46960,6 @@ function computeGeometryThings(geometry) {
   geometry.computeFaceNormals();
   geometry.computeVertexNormals();
 }
-
-// custom dom layout etc
 
 //console.log('gold collision!');
 
