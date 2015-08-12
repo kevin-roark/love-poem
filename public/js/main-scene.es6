@@ -54,8 +54,12 @@ export class MainScene extends SheenScene {
     this.poemDiv.html(this.text);
     this.domContainer.append(this.poemDiv);
 
-    this.textMesh = createText(this.textLines[0]);
-    this.textMesh.addTo(this.scene);
+    this.textMeshes = [];
+    this.textLines.forEach((line, index) => {
+      let textMesh = createText(line, index + 1);
+      textMesh.addTo(this.scene);
+      this.textMeshes.push(textMesh);
+    });
 
     this.ground = createGround();
     this.ground.addTo(this.scene);
@@ -79,7 +83,7 @@ export class MainScene extends SheenScene {
 
     setTimeout(() => {
       this.addGoldBar();
-    }, 1000);
+    }, 3000);
   }
 
   addGoldBar() {
@@ -108,7 +112,9 @@ export class MainScene extends SheenScene {
 
     this.poemDiv.remove();
 
-    this.textMesh.removeFrom(this.scene);
+    this.textMeshes.forEach((textMesh) => {
+      textMesh.removeFrom(this.scene);
+    });
 
     this.goldBars.forEach((goldbar) => {
       goldbar.removeFrom(this.scene);
@@ -169,18 +175,17 @@ export class MainScene extends SheenScene {
 
 }
 
-function createText(text) {
+function createText(text, lineNumber) {
   return new SheenMesh({
     meshCreator: (callback) => {
       let geometry = new THREE.TextGeometry(text, {
-        size: 2.2,
-        height: 0.01,
-        curveSegments: 1,
+        size: 2.0,
+        height: 0.5,
         font: 'helvetiker',
 
         bevelThickness: 0.35,
-        bevelSize: 0.15,
-        bevelSegments: 1,
+        bevelSize: 0.05,
+        bevelSegments: 5,
         bevelEnabled: true,
       });
 
@@ -203,8 +208,19 @@ function createText(text) {
       callback(geometry, material, mesh);
     },
 
-    position: new THREE.Vector3(-10, WallHeight * 0.8, -GoldBarMinZ - GoldBarZRange/2)
+    position: positionForLineNumber(lineNumber)
   });
+
+  function positionForLineNumber(lineNumber) {
+    if (!lineNumber) lineNumber = 1;
+
+    let firstLineY = WallHeight;
+    let thisLineY = firstLineY - lineNumber * 4;
+
+    let firstLineZ = -GoldBarMinZ;
+
+    return new THREE.Vector3(5, thisLineY, firstLineZ);
+  }
 }
 
 function createGoldBar(scale) {

@@ -46698,8 +46698,12 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
         this.poemDiv.html(this.text);
         this.domContainer.append(this.poemDiv);
 
-        this.textMesh = createText(this.textLines[0]);
-        this.textMesh.addTo(this.scene);
+        this.textMeshes = [];
+        this.textLines.forEach(function (line, index) {
+          var textMesh = createText(line, index + 1);
+          textMesh.addTo(_this.scene);
+          _this.textMeshes.push(textMesh);
+        });
 
         this.ground = createGround();
         this.ground.addTo(this.scene);
@@ -46726,7 +46730,7 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
 
         setTimeout(function () {
           _this.addGoldBar();
-        }, 1000);
+        }, 3000);
       }
     },
     addGoldBar: {
@@ -46761,7 +46765,9 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
 
         this.poemDiv.remove();
 
-        this.textMesh.removeFrom(this.scene);
+        this.textMeshes.forEach(function (textMesh) {
+          textMesh.removeFrom(_this.scene);
+        });
 
         this.goldBars.forEach(function (goldbar) {
           goldbar.removeFrom(_this.scene);
@@ -46828,18 +46834,17 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
   return MainScene;
 })(SheenScene);
 
-function createText(text) {
+function createText(text, lineNumber) {
   return new SheenMesh({
     meshCreator: function (callback) {
       var geometry = new THREE.TextGeometry(text, {
-        size: 2.2,
-        height: 0.01,
-        curveSegments: 1,
+        size: 2,
+        height: 0.5,
         font: "helvetiker",
 
         bevelThickness: 0.35,
-        bevelSize: 0.15,
-        bevelSegments: 1,
+        bevelSize: 0.05,
+        bevelSegments: 5,
         bevelEnabled: true });
 
       geometry.computeBoundingBox();
@@ -46861,8 +46866,19 @@ function createText(text) {
       callback(geometry, material, mesh);
     },
 
-    position: new THREE.Vector3(-10, WallHeight * 0.8, -GoldBarMinZ - GoldBarZRange / 2)
+    position: positionForLineNumber(lineNumber)
   });
+
+  function positionForLineNumber(lineNumber) {
+    if (!lineNumber) lineNumber = 1;
+
+    var firstLineY = WallHeight;
+    var thisLineY = firstLineY - lineNumber * 4;
+
+    var firstLineZ = -GoldBarMinZ;
+
+    return new THREE.Vector3(5, thisLineY, firstLineZ);
+  }
 }
 
 function createGoldBar(scale) {
