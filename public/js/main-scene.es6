@@ -2,6 +2,8 @@
 let THREE = require('three');
 let Physijs = require('./lib/physi.js');
 let $ = require('jquery');
+let buzz = require('./lib/buzz.js');
+let kt = require('kutility');
 
 import {SheenScene} from './sheen-scene.es6';
 let SheenMesh = require('./sheen-mesh');
@@ -17,6 +19,17 @@ let FenceCenterZ = (-GoldBarMinZ + FenceBuffer) - FenceDepth/2;
 let WallHeight = 40;
 
 let ClearColor = 0xffffff;
+
+let sounds = [];
+let soundFilenames = ['/media/fork', /*'/media/pin',*/ '/media/ting', '/media/thing', '/media/wrench'];
+soundFilenames.forEach((filename) => {
+  let sound = new buzz.sound(filename, {
+    formats: [ "ogg", "mp3"],
+    webAudioApi: true,
+    volume: 30
+  });
+  sounds.push(sound);
+});
 
 export class MainScene extends SheenScene {
 
@@ -175,6 +188,12 @@ export class MainScene extends SheenScene {
 
 }
 
+function playGoldSound() {
+  let sound = kt.choice(sounds);
+  sound.setTime(0);
+  sound.play();
+}
+
 function createText(text, lineNumber) {
   return new SheenMesh({
     meshCreator: (callback) => {
@@ -251,7 +270,7 @@ function createGoldBar(scale) {
     scale: scale,
 
     collisionHandler: () => {
-      //console.log('gold collision!');
+      playGoldSound();
     }
   });
 
@@ -297,7 +316,7 @@ function createGround() {
     position: new THREE.Vector3(0, 0, FenceCenterZ),
 
     collisionHandler: () => {
-      //console.log('ground collision!');
+
     }
   });
 }
