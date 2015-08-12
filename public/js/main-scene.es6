@@ -6,6 +6,16 @@ let $ = require('jquery');
 import {SheenScene} from './sheen-scene.es6';
 let SheenMesh = require('./sheen-mesh');
 
+let GoldBarXLimit = 25;
+let GoldBarMinZ = 30; let GoldBarZRange = 30;
+
+let FenceBuffer = 5;
+let FenceWidth = (GoldBarXLimit + FenceBuffer) * 2;
+let FenceDepth = GoldBarZRange + FenceBuffer * 2;
+let FenceCenterZ = (-GoldBarMinZ + FenceBuffer) - FenceDepth/2;
+
+let WallHeight = 40;
+
 export class MainScene extends SheenScene {
 
   /// Init
@@ -33,29 +43,34 @@ export class MainScene extends SheenScene {
 
     this.renderer.setClearColor(0x000000, 1);
 
+    this.camera.position.set(0, 25, 20);
+    this.camera.rotation.x = -Math.PI / 15;
+
     this.poemDiv = $('<div class="plaintext-poem"></div>');
     this.poemDiv.html(this.text);
     this.domContainer.append(this.poemDiv);
 
-    // add shit to your scene
+    this.ground = createGround();
+    this.ground.addTo(this.scene);
+
+    this.leftWall = createWall('left');
+    this.rightWall = createWall('right');
+    this.frontWall = createWall('front');
+    this.backWall = createWall('back');
+    this.walls = [this.leftWall, this.rightWall, this.frontWall, this.backWall];
+    this.walls.forEach((wall) => {
+      wall.addTo(this.scene);
+    });
   }
 
   doTimedWork() {
     super.doTimedWork();
 
     setInterval(() => {
-      var goldbar = new GoldBar({
-        position: randomGoldPosition(),
-
-        collisionHandler: () => {
-          console.log('collision!');
-        }
-      });
-
+      var goldbar = createGoldBar();
       goldbar.addTo(this.scene);
-
       this.goldBars.push(goldbar);
-    }, 2000);
+    }, 1000);
   }
 
   exit() {
@@ -70,7 +85,11 @@ export class MainScene extends SheenScene {
     });
     this.goldBars = [];
 
-    // remove all your scene-specific stuff
+    this.ground.removeFrom(this.scene);
+
+    this.walls.forEach((wall) => {
+      wall.removeFrom(this.scene);
+    });
   }
 
   resize() {
@@ -89,31 +108,136 @@ export class MainScene extends SheenScene {
 
 }
 
-class GoldBar extends SheenMesh {
-  constructor(options) {
-    options.meshCreator = (callback) => {
-      var geometry = new THREE.BoxGeometry(2, 2, 2);
+function createGoldBar() {
+  return new SheenMesh({
+    meshCreator: (callback) => {
+      let geometry = new THREE.BoxGeometry(7, 3.625, 1.75);
 
-      var rawMaterial = new THREE.MeshBasicMaterial({
+      let rawMaterial = new THREE.MeshBasicMaterial({
         color: 0xf9d902,
         side: THREE.DoubleSide
       });
 
       // give decent average values for friction and restitution
-      var material = Physijs.createMaterial(rawMaterial, 0.4, 0.6);
+      let material = Physijs.createMaterial(rawMaterial, 0.4, 0.6);
 
-      var mesh = new Physijs.BoxMesh(geometry, material, 5);
+      let mesh = new Physijs.BoxMesh(geometry, material, 5);
 
       callback(geometry, material, mesh);
-    };
+    },
 
-    super(options);
+    position: randomGoldPosition(),
+
+    collisionHandler: () => {
+      console.log('gold collision!');
+    }
+  });
+
+  function randomGoldPosition() {
+    var x = -GoldBarXLimit + Math.random() * (GoldBarXLimit * 2);
+    var y = Math.random() * (WallHeight - 5);
+    var z = -GoldBarMinZ - Math.random() * GoldBarZRange;
+    return new THREE.Vector3(x, y, z);
   }
 }
 
-function randomGoldPosition() {
-  var x = -20 + Math.random() * 40;
-  var y = Math.random() * 30;
-  var z = -30 + Math.random() * -40;
-  return new THREE.Vector3(x, y, z);
+function createGround() {
+  return new SheenMesh({
+    meshCreator: (callback) => {
+      let geometry = new THREE.PlaneGeometry(FenceWidth, FenceDepth);
+      computeGeometryThings(geometry);
+
+      let rawMaterial = new THREE.MeshBasicMaterial({
+        color: 0x0000ff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.0
+      });
+
+      // lets go high friction, low restitution
+      let material = Physijs.createMaterial(rawMaterial, 0.8, 0.4);
+
+      let mesh = new Physijs.BoxMesh(geometry, material, 0);
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.__dirtyRotation = true;
+
+      callback(geometry, material, mesh);
+    },
+
+    position: new THREE.Vector3(0, 0, FenceCenterZ),
+
+    collisionHandler: () => {
+      console.log('ground collision!');
+    }
+  });
+}
+
+function createWall(direction) {
+  var position = new THREE.Vector3();
+  switch (direction) {
+    case 'left':
+      position.set(-GoldBarXLimit - FenceBuffer, WallHeight/2 , FenceCenterZ);
+      break;
+
+    case 'right':
+      position.set(GoldBarXLimit + FenceBuffer, WallHeight/2 , FenceCenterZ);
+      break;
+
+    case 'back':
+      position.set(0, WallHeight/2, -GoldBarMinZ - GoldBarZRange - FenceBuffer);
+      break;
+
+    case 'front':
+      position.set(0, WallHeight/2, -GoldBarMinZ + FenceBuffer);
+      break;
+  }
+
+  return new SheenMesh({
+    meshCreator: (callback) => {
+      var geometry;
+      switch (direction) {
+        case 'left':
+        case 'right':
+          geometry = new THREE.BoxGeometry(1, WallHeight, FenceDepth);
+          break;
+
+        case 'back':
+        case 'front':
+          geometry = new THREE.BoxGeometry(FenceWidth, WallHeight, 1);
+          break;
+      }
+
+      if (!geometry) {
+        callback(null, null, null);
+        return;
+      }
+
+      computeGeometryThings(geometry);
+
+      let rawMaterial = new THREE.MeshBasicMaterial({
+        color: 0xff0000,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.0
+      });
+
+      // lets go high friction, low restitution
+      let material = Physijs.createMaterial(rawMaterial, 0.8, 0.4);
+
+      let mesh = new Physijs.BoxMesh(geometry, material, 0);
+
+      callback(geometry, material, mesh);
+    },
+
+    position: position,
+
+    collisionHandler: () => {
+      console.log('wall collision!');
+    }
+  });
+}
+
+function computeGeometryThings(geometry) {
+  geometry.computeFaceNormals();
+  geometry.computeVertexNormals();
 }
