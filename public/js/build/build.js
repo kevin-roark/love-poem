@@ -46672,6 +46672,8 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
 
     this.text = "It's so nice<br>" + "to wake up in the morning<br>" + " all alone<br>" + "and not have to tell somebody<br>" + " you love them<br>" + "when you don't love them<br>" + " any more.";
 
+    this.textLines = this.text.split("<br>");
+
     this.goldBars = [];
   }
 
@@ -46695,6 +46697,9 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
         this.poemDiv = $("<div class=\"plaintext-poem\"></div>");
         this.poemDiv.html(this.text);
         this.domContainer.append(this.poemDiv);
+
+        this.textMesh = createText(this.textLines[0]);
+        this.textMesh.addTo(this.scene);
 
         this.ground = createGround();
         this.ground.addTo(this.scene);
@@ -46755,6 +46760,8 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
         this.renderer.setClearColor(16777215, 1);
 
         this.poemDiv.remove();
+
+        this.textMesh.removeFrom(this.scene);
 
         this.goldBars.forEach(function (goldbar) {
           goldbar.removeFrom(_this.scene);
@@ -46821,18 +46828,50 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
   return MainScene;
 })(SheenScene);
 
+function createText(text) {
+  return new SheenMesh({
+    meshCreator: function (callback) {
+      var geometry = new THREE.TextGeometry(text, {
+        size: 2.2,
+        height: 0.01,
+        curveSegments: 1,
+        font: "helvetiker",
+
+        bevelThickness: 0.35,
+        bevelSize: 0.15,
+        bevelSegments: 1,
+        bevelEnabled: true });
+
+      geometry.computeBoundingBox();
+      geometry.computeFaceNormals();
+      geometry.computeVertexNormals();
+
+      var material = new THREE.MeshPhongMaterial({
+        map: createGoldTexture(),
+
+        specular: 16374035,
+        shininess: 100,
+
+        side: THREE.DoubleSide
+      });
+
+      var mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+
+      callback(geometry, material, mesh);
+    },
+
+    position: new THREE.Vector3(-10, WallHeight * 0.8, -GoldBarMinZ - GoldBarZRange / 2)
+  });
+}
+
 function createGoldBar(scale) {
   return new SheenMesh({
     meshCreator: function (callback) {
       var geometry = new THREE.BoxGeometry(7, 3.625, 1.75);
 
-      var texture = THREE.ImageUtils.loadTexture("/media/gold.jpg");
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.set(4, 4);
-
       var rawMaterial = new THREE.MeshPhongMaterial({
-        map: texture,
+        map: createGoldTexture(),
 
         specular: 16374035,
         shininess: 100,
@@ -46862,6 +46901,14 @@ function createGoldBar(scale) {
     var z = -GoldBarMinZ - Math.random() * GoldBarZRange;
     return new THREE.Vector3(x, y, z);
   }
+}
+
+function createGoldTexture() {
+  var texture = THREE.ImageUtils.loadTexture("/media/gold.jpg");
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(4, 4);
+  return texture;
 }
 
 function createGround() {
@@ -47583,6 +47630,10 @@ var ThreeBoiler = exports.ThreeBoiler = (function () {
 
   return ThreeBoiler;
 })();
+
+// setup typeface
+window._typeface_js = { faces: THREE.FontUtils.faces, loadFace: THREE.FontUtils.loadFace };
+THREE.typeface_js = window._typeface_js;
 
 // request animation frame shim
 (function () {

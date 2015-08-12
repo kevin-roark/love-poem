@@ -35,6 +35,8 @@ export class MainScene extends SheenScene {
                 "when you don't love them<br>" +
                 " any more.";
 
+    this.textLines = this.text.split('<br>');
+
     this.goldBars = [];
   }
 
@@ -51,6 +53,9 @@ export class MainScene extends SheenScene {
     this.poemDiv = $('<div class="plaintext-poem"></div>');
     this.poemDiv.html(this.text);
     this.domContainer.append(this.poemDiv);
+
+    this.textMesh = createText(this.textLines[0]);
+    this.textMesh.addTo(this.scene);
 
     this.ground = createGround();
     this.ground.addTo(this.scene);
@@ -102,6 +107,8 @@ export class MainScene extends SheenScene {
     this.renderer.setClearColor(0xffffff, 1);
 
     this.poemDiv.remove();
+
+    this.textMesh.removeFrom(this.scene);
 
     this.goldBars.forEach((goldbar) => {
       goldbar.removeFrom(this.scene);
@@ -162,18 +169,51 @@ export class MainScene extends SheenScene {
 
 }
 
+function createText(text) {
+  return new SheenMesh({
+    meshCreator: (callback) => {
+      let geometry = new THREE.TextGeometry(text, {
+        size: 2.2,
+        height: 0.01,
+        curveSegments: 1,
+        font: 'helvetiker',
+
+        bevelThickness: 0.35,
+        bevelSize: 0.15,
+        bevelSegments: 1,
+        bevelEnabled: true,
+      });
+
+      geometry.computeBoundingBox();
+      geometry.computeFaceNormals();
+      geometry.computeVertexNormals();
+
+      let material = new THREE.MeshPhongMaterial({
+        map: createGoldTexture(),
+
+        specular: 0xf9d913,
+        shininess: 100,
+
+        side: THREE.DoubleSide
+      });
+
+      let mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+
+      callback(geometry, material, mesh);
+    },
+
+    position: new THREE.Vector3(-10, WallHeight * 0.8, -GoldBarMinZ - GoldBarZRange/2)
+  });
+}
+
 function createGoldBar(scale) {
   return new SheenMesh({
     meshCreator: (callback) => {
       let geometry = new THREE.BoxGeometry(7, 3.625, 1.75);
 
-      let texture = THREE.ImageUtils.loadTexture('/media/gold.jpg');
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.set(4, 4);
-
       let rawMaterial = new THREE.MeshPhongMaterial({
-        map: texture,
+        map: createGoldTexture(),
 
         specular: 0xf9d913,
         shininess: 100,
@@ -205,6 +245,14 @@ function createGoldBar(scale) {
     var z = -GoldBarMinZ - Math.random() * GoldBarZRange;
     return new THREE.Vector3(x, y, z);
   }
+}
+
+function createGoldTexture() {
+  let texture = THREE.ImageUtils.loadTexture('/media/gold.jpg');
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(4, 4);
+  return texture;
 }
 
 function createGround() {
