@@ -1,2 +1,2 @@
 # love-poem
-[love]-[poem] | feels nice
+[love poem] | It feels nice to wake up all alone
