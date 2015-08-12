@@ -16,6 +16,8 @@ let FenceCenterZ = (-GoldBarMinZ + FenceBuffer) - FenceDepth/2;
 
 let WallHeight = 40;
 
+let ClearColor = 0xffffff;
+
 export class MainScene extends SheenScene {
 
   /// Init
@@ -41,7 +43,7 @@ export class MainScene extends SheenScene {
   enter() {
     super.enter();
 
-    this.renderer.setClearColor(0x000000, 1);
+    this.renderer.setClearColor(ClearColor, 1);
 
     this.camera.position.set(0, 25, 20);
     this.camera.rotation.x = -Math.PI / 15;
@@ -61,6 +63,8 @@ export class MainScene extends SheenScene {
     this.walls.forEach((wall) => {
       wall.addTo(this.scene);
     });
+
+    this.makeLights();
   }
 
   doTimedWork() {
@@ -90,6 +94,10 @@ export class MainScene extends SheenScene {
     this.walls.forEach((wall) => {
       wall.removeFrom(this.scene);
     });
+
+    this.scene.remove(this.hemiLight);
+    this.scene.remove(this.frontLight);
+    this.scene.remove(this.backLight);
   }
 
   resize() {
@@ -106,6 +114,43 @@ export class MainScene extends SheenScene {
     });
   }
 
+  // Creation
+
+  makeLights() {
+    this.hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
+    this.hemiLight.color.setHSL(0.6, 1, 0.6);
+    this.hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+    this.hemiLight.position.set( 0, 500, 0 );
+    this.scene.add(this.hemiLight);
+
+    var frontLight = new THREE.DirectionalLight( 0xffffff, 1 );
+    frontLight.color.setHSL( 0.1, 1, 0.95 );
+    frontLight.position.set(-40, 125, 200);
+
+    setupShadow(frontLight);
+
+    frontLight.target = this.ground.mesh;
+    this.frontLight = frontLight;
+    this.scene.add(frontLight);
+
+    var backLight = new THREE.DirectionalLight( 0xffffff, 1 );
+    backLight.color.setHSL( 0.1, 1, 0.95 );
+    backLight.position.set(0, 125, -200);
+
+    //setupShadow(backLight);
+
+    backLight.target = this.ground.mesh;
+    this.backLight = backLight;
+    this.scene.add(backLight);
+
+    function setupShadow(light) {
+      light.castShadow = true;
+      light.shadowCameraFar = 500;
+      light.shadowDarkness = 0.5;
+      light.shadowMapWidth = light.shadowMapHeight = 4096;
+    }
+  }
+
 }
 
 function createGoldBar() {
@@ -113,8 +158,17 @@ function createGoldBar() {
     meshCreator: (callback) => {
       let geometry = new THREE.BoxGeometry(7, 3.625, 1.75);
 
-      let rawMaterial = new THREE.MeshBasicMaterial({
-        color: 0xf9d902,
+      let texture = THREE.ImageUtils.loadTexture('/media/gold.jpg');
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(4, 4);
+
+      let rawMaterial = new THREE.MeshPhongMaterial({
+        map: texture,
+
+        specular: 0xf9d902,
+        shininess: 100,
+
         side: THREE.DoubleSide
       });
 
@@ -122,14 +176,17 @@ function createGoldBar() {
       let material = Physijs.createMaterial(rawMaterial, 0.4, 0.6);
 
       let mesh = new Physijs.BoxMesh(geometry, material, 5);
+      mesh.castShadow = true;
 
       callback(geometry, material, mesh);
     },
 
     position: randomGoldPosition(),
 
+    scale: 1.5,
+
     collisionHandler: () => {
-      console.log('gold collision!');
+      //console.log('gold collision!');
     }
   });
 
@@ -148,10 +205,8 @@ function createGround() {
       computeGeometryThings(geometry);
 
       let rawMaterial = new THREE.MeshBasicMaterial({
-        color: 0x0000ff,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.0
+        color: ClearColor,
+        side: THREE.DoubleSide
       });
 
       // lets go high friction, low restitution
@@ -161,13 +216,15 @@ function createGround() {
       mesh.rotation.x = -Math.PI / 2;
       mesh.__dirtyRotation = true;
 
+      mesh.receiveShadow = true;
+
       callback(geometry, material, mesh);
     },
 
     position: new THREE.Vector3(0, 0, FenceCenterZ),
 
     collisionHandler: () => {
-      console.log('ground collision!');
+      //console.log('ground collision!');
     }
   });
 }
@@ -232,7 +289,7 @@ function createWall(direction) {
     position: position,
 
     collisionHandler: () => {
-      console.log('wall collision!');
+      //console.log('wall collision!');
     }
   });
 }

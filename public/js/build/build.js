@@ -46657,6 +46657,8 @@ var FenceCenterZ = -GoldBarMinZ + FenceBuffer - FenceDepth / 2;
 
 var WallHeight = 40;
 
+var ClearColor = 16777215;
+
 var MainScene = exports.MainScene = (function (_SheenScene) {
 
   /// Init
@@ -46685,7 +46687,7 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
 
         _get(Object.getPrototypeOf(MainScene.prototype), "enter", this).call(this);
 
-        this.renderer.setClearColor(0, 1);
+        this.renderer.setClearColor(ClearColor, 1);
 
         this.camera.position.set(0, 25, 20);
         this.camera.rotation.x = -Math.PI / 15;
@@ -46705,6 +46707,8 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
         this.walls.forEach(function (wall) {
           wall.addTo(_this.scene);
         });
+
+        this.makeLights();
       }
     },
     doTimedWork: {
@@ -46740,6 +46744,10 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
         this.walls.forEach(function (wall) {
           wall.removeFrom(_this.scene);
         });
+
+        this.scene.remove(this.hemiLight);
+        this.scene.remove(this.frontLight);
+        this.scene.remove(this.backLight);
       }
     },
     resize: {
@@ -46755,6 +46763,45 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
           goldbar.update();
         });
       }
+    },
+    makeLights: {
+
+      // Creation
+
+      value: function makeLights() {
+        this.hemiLight = new THREE.HemisphereLight(16777215, 16777215, 0.5);
+        this.hemiLight.color.setHSL(0.6, 1, 0.6);
+        this.hemiLight.groundColor.setHSL(0.095, 1, 0.75);
+        this.hemiLight.position.set(0, 500, 0);
+        this.scene.add(this.hemiLight);
+
+        var frontLight = new THREE.DirectionalLight(16777215, 1);
+        frontLight.color.setHSL(0.1, 1, 0.95);
+        frontLight.position.set(-40, 125, 200);
+
+        setupShadow(frontLight);
+
+        frontLight.target = this.ground.mesh;
+        this.frontLight = frontLight;
+        this.scene.add(frontLight);
+
+        var backLight = new THREE.DirectionalLight(16777215, 1);
+        backLight.color.setHSL(0.1, 1, 0.95);
+        backLight.position.set(0, 125, -200);
+
+        //setupShadow(backLight);
+
+        backLight.target = this.ground.mesh;
+        this.backLight = backLight;
+        this.scene.add(backLight);
+
+        function setupShadow(light) {
+          light.castShadow = true;
+          light.shadowCameraFar = 500;
+          light.shadowDarkness = 0.5;
+          light.shadowMapWidth = light.shadowMapHeight = 4096;
+        }
+      }
     }
   });
 
@@ -46766,8 +46813,17 @@ function createGoldBar() {
     meshCreator: function (callback) {
       var geometry = new THREE.BoxGeometry(7, 3.625, 1.75);
 
-      var rawMaterial = new THREE.MeshBasicMaterial({
-        color: 16374018,
+      var texture = THREE.ImageUtils.loadTexture("/media/gold.jpg");
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(4, 4);
+
+      var rawMaterial = new THREE.MeshPhongMaterial({
+        map: texture,
+
+        specular: 16374018,
+        shininess: 100,
+
         side: THREE.DoubleSide
       });
 
@@ -46775,15 +46831,16 @@ function createGoldBar() {
       var material = Physijs.createMaterial(rawMaterial, 0.4, 0.6);
 
       var mesh = new Physijs.BoxMesh(geometry, material, 5);
+      mesh.castShadow = true;
 
       callback(geometry, material, mesh);
     },
 
     position: randomGoldPosition(),
 
-    collisionHandler: function () {
-      console.log("gold collision!");
-    }
+    scale: 1.5,
+
+    collisionHandler: function () {}
   });
 
   function randomGoldPosition() {
@@ -46801,10 +46858,8 @@ function createGround() {
       computeGeometryThings(geometry);
 
       var rawMaterial = new THREE.MeshBasicMaterial({
-        color: 255,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0
+        color: ClearColor,
+        side: THREE.DoubleSide
       });
 
       // lets go high friction, low restitution
@@ -46814,14 +46869,14 @@ function createGround() {
       mesh.rotation.x = -Math.PI / 2;
       mesh.__dirtyRotation = true;
 
+      mesh.receiveShadow = true;
+
       callback(geometry, material, mesh);
     },
 
     position: new THREE.Vector3(0, 0, FenceCenterZ),
 
-    collisionHandler: function () {
-      console.log("ground collision!");
-    }
+    collisionHandler: function () {}
   });
 }
 
@@ -46884,9 +46939,7 @@ function createWall(direction) {
 
     position: position,
 
-    collisionHandler: function () {
-      console.log("wall collision!");
-    }
+    collisionHandler: function () {}
   });
 }
 
@@ -46896,6 +46949,12 @@ function computeGeometryThings(geometry) {
 }
 
 // custom dom layout etc
+
+//console.log('gold collision!');
+
+//console.log('ground collision!');
+
+//console.log('wall collision!');
 
 },{"./lib/physi.js":6,"./sheen-mesh":9,"./sheen-scene.es6":10,"jquery":1,"three":3}],8:[function(require,module,exports){
 "use strict";
