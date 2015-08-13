@@ -47553,36 +47553,37 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
       // Creation
 
       value: function makeLights() {
-        this.hemiLight = new THREE.HemisphereLight(16777215, 16777215, 0.5);
-        this.hemiLight.color.setHSL(0.6, 1, 0.6);
-        this.hemiLight.groundColor.setHSL(0.095, 1, 0.75);
-        this.hemiLight.position.set(0, 500, 0);
-        this.scene.add(this.hemiLight);
+        var scene = this.scene;
+        var ground = this.ground;
 
-        var frontLight = new THREE.DirectionalLight(16777215, 1);
-        frontLight.color.setHSL(0.1, 1, 0.95);
-        frontLight.position.set(-40, 125, 200);
+        this.frontLight = makeDirectionalLight();
+        this.frontLight.position.set(-40, 125, 200);
+        setupShadow(this.frontLight);
 
-        setupShadow(frontLight);
+        this.backLight = makeDirectionalLight();
+        this.backLight.position.set(40, 125, -200);
 
-        frontLight.target = this.ground.mesh;
-        this.frontLight = frontLight;
-        this.scene.add(frontLight);
+        this.leftLight = makeDirectionalLight();
+        this.leftLight.position.set(-200, 75, -45);
 
-        var backLight = new THREE.DirectionalLight(16777215, 1);
-        backLight.color.setHSL(0.1, 1, 0.95);
-        backLight.position.set(0, 125, -200);
+        this.rightLight = makeDirectionalLight();
+        this.rightLight.position.set(200, 75, -45);
+        setupShadow(this.rightLight);
+        this.rightLight.shadowDarkness = 0.05;
 
-        //setupShadow(backLight);
+        function makeDirectionalLight() {
+          var light = new THREE.DirectionalLight(16777215, 0.9);
+          light.color.setHSL(0.1, 1, 0.95);
+          light.target = ground.mesh;
 
-        backLight.target = this.ground.mesh;
-        this.backLight = backLight;
-        this.scene.add(backLight);
+          scene.add(light);
+          return light;
+        }
 
         function setupShadow(light) {
           light.castShadow = true;
           light.shadowCameraFar = 500;
-          light.shadowDarkness = 0.5;
+          light.shadowDarkness = 0.6;
           light.shadowMapWidth = light.shadowMapHeight = 4096;
         }
       }
@@ -47616,7 +47617,7 @@ function createText(text, lineNumber) {
       geometry.computeVertexNormals();
 
       var material = new THREE.MeshPhongMaterial({
-        map: createGoldTexture(),
+        map: createGoldTexture(true),
 
         specular: 16374035,
         shininess: 100,
@@ -47626,6 +47627,8 @@ function createText(text, lineNumber) {
 
       var mesh = new THREE.Mesh(geometry, material);
       mesh.castShadow = true;
+      mesh.rotation.y = -Math.PI / 12;
+      mesh.__dirtyRotation = true;
 
       callback(geometry, material, mesh);
     },
@@ -47639,9 +47642,9 @@ function createText(text, lineNumber) {
     var firstLineY = WallHeight;
     var thisLineY = firstLineY - lineNumber * 4;
 
-    var firstLineZ = -GoldBarMinZ;
+    var firstLineZ = -GoldBarMinZ - 7;
 
-    return new THREE.Vector3(5, thisLineY, firstLineZ);
+    return new THREE.Vector3(2, thisLineY, firstLineZ);
   }
 }
 
@@ -47651,9 +47654,9 @@ function createGoldBar(scale) {
       var geometry = new THREE.BoxGeometry(7, 3.625, 1.75);
 
       var rawMaterial = new THREE.MeshPhongMaterial({
-        map: createGoldTexture(),
+        map: createGoldTexture(false),
 
-        specular: 16374035,
+        specular: 16766720,
         shininess: 100,
 
         side: THREE.DoubleSide
@@ -47679,24 +47682,25 @@ function createGoldBar(scale) {
 
   function randomGoldPosition() {
     var x = -GoldBarXLimit + Math.random() * (GoldBarXLimit * 2);
-    var y = 10 + Math.random() * (WallHeight - FenceBuffer - 10);
+    var y = 40 + Math.random() * 60;
     var z = -GoldBarMinZ - Math.random() * GoldBarZRange;
     return new THREE.Vector3(x, y, z);
   }
 }
 
-function createGoldTexture() {
-  var texture = THREE.ImageUtils.loadTexture("/media/gold.jpg");
+function createGoldTexture(useOld) {
+  var name = useOld ? "/media/gold.jpg" : "/media/gold1.jpg";
+  var texture = THREE.ImageUtils.loadTexture(name);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(4, 4);
+  texture.repeat.set(1, 1);
   return texture;
 }
 
 function createGround() {
   return new SheenMesh({
     meshCreator: function (callback) {
-      var geometry = new THREE.PlaneGeometry(FenceWidth, FenceDepth);
+      var geometry = new THREE.PlaneGeometry(FenceWidth * 5, FenceDepth * 5);
       computeGeometryThings(geometry);
 
       var rawMaterial = new THREE.MeshBasicMaterial({
@@ -47716,7 +47720,7 @@ function createGround() {
       callback(geometry, material, mesh);
     },
 
-    position: new THREE.Vector3(0, 0, FenceCenterZ),
+    position: new THREE.Vector3(0, 0, -GoldBarMinZ + FenceBuffer - FenceDepth * 5 / 2),
 
     collisionHandler: function () {}
   });
