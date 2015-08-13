@@ -47553,36 +47553,37 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
       // Creation
 
       value: function makeLights() {
-        this.hemiLight = new THREE.HemisphereLight(16777215, 16777215, 0.5);
-        this.hemiLight.color.setHSL(0.6, 1, 0.6);
-        this.hemiLight.groundColor.setHSL(0.095, 1, 0.75);
-        this.hemiLight.position.set(0, 500, 0);
-        this.scene.add(this.hemiLight);
+        var scene = this.scene;
+        var ground = this.ground;
 
-        var frontLight = new THREE.DirectionalLight(16777215, 1);
-        frontLight.color.setHSL(0.1, 1, 0.95);
-        frontLight.position.set(-40, 125, 200);
+        this.frontLight = makeDirectionalLight();
+        this.frontLight.position.set(-40, 125, 200);
+        setupShadow(this.frontLight);
 
-        setupShadow(frontLight);
+        this.backLight = makeDirectionalLight();
+        this.backLight.position.set(40, 125, -200);
 
-        frontLight.target = this.ground.mesh;
-        this.frontLight = frontLight;
-        this.scene.add(frontLight);
+        this.leftLight = makeDirectionalLight();
+        this.leftLight.position.set(-200, 75, -45);
 
-        var backLight = new THREE.DirectionalLight(16777215, 1);
-        backLight.color.setHSL(0.1, 1, 0.95);
-        backLight.position.set(0, 125, -200);
+        this.rightLight = makeDirectionalLight();
+        this.rightLight.position.set(200, 75, -45);
+        setupShadow(this.rightLight);
+        this.rightLight.shadowDarkness = 0.05;
 
-        //setupShadow(backLight);
+        function makeDirectionalLight() {
+          var light = new THREE.DirectionalLight(16777215, 0.9);
+          light.color.setHSL(0.1, 1, 0.95);
+          light.target = ground.mesh;
 
-        backLight.target = this.ground.mesh;
-        this.backLight = backLight;
-        this.scene.add(backLight);
+          scene.add(light);
+          return light;
+        }
 
         function setupShadow(light) {
           light.castShadow = true;
           light.shadowCameraFar = 500;
-          light.shadowDarkness = 0.5;
+          light.shadowDarkness = 0.6;
           light.shadowMapWidth = light.shadowMapHeight = 4096;
         }
       }
