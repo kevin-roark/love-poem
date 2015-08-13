@@ -47595,8 +47595,11 @@ var MainScene = exports.MainScene = (function (_SheenScene) {
 
 function playGoldSound() {
   var sound = kt.choice(sounds);
-  sound.setTime(0);
-  sound.play();
+
+  if (sound.isPaused() || sound.getTime() > 0.2) {
+    sound.setTime(0);
+    sound.play();
+  }
 }
 
 function createText(text, lineNumber) {

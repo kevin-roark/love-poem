@@ -191,8 +191,11 @@ export class MainScene extends SheenScene {
 
 function playGoldSound() {
   let sound = kt.choice(sounds);
-  sound.setTime(0);
-  sound.play();
+
+  if (sound.isPaused() || sound.getTime() > 0.2) {
+    sound.setTime(0);
+    sound.play();
+  }
 }
 
 function createText(text, lineNumber) {
