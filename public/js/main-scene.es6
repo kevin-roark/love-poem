@@ -224,6 +224,8 @@ function createText(text, lineNumber) {
 
       let mesh = new THREE.Mesh(geometry, material);
       mesh.castShadow = true;
+      mesh.rotation.y = -Math.PI / 12;
+      mesh.__dirtyRotation = true;
 
       callback(geometry, material, mesh);
     },
@@ -237,9 +239,9 @@ function createText(text, lineNumber) {
     let firstLineY = WallHeight;
     let thisLineY = firstLineY - lineNumber * 4;
 
-    let firstLineZ = -GoldBarMinZ;
+    let firstLineZ = -GoldBarMinZ - 7;
 
-    return new THREE.Vector3(5, thisLineY, firstLineZ);
+    return new THREE.Vector3(2, thisLineY, firstLineZ);
   }
 }
 
@@ -277,7 +279,7 @@ function createGoldBar(scale) {
 
   function randomGoldPosition() {
     var x = -GoldBarXLimit + Math.random() * (GoldBarXLimit * 2);
-    var y = 10 + Math.random() * (WallHeight - FenceBuffer - 10);
+    var y = 40 + Math.random() * 60;
     var z = -GoldBarMinZ - Math.random() * GoldBarZRange;
     return new THREE.Vector3(x, y, z);
   }
@@ -294,7 +296,7 @@ function createGoldTexture() {
 function createGround() {
   return new SheenMesh({
     meshCreator: (callback) => {
-      let geometry = new THREE.PlaneGeometry(FenceWidth, FenceDepth);
+      let geometry = new THREE.PlaneGeometry(FenceWidth * 5, FenceDepth * 5);
       computeGeometryThings(geometry);
 
       let rawMaterial = new THREE.MeshBasicMaterial({
@@ -314,7 +316,7 @@ function createGround() {
       callback(geometry, material, mesh);
     },
 
-    position: new THREE.Vector3(0, 0, FenceCenterZ),
+    position: new THREE.Vector3(0, 0, (-GoldBarMinZ + FenceBuffer) - FenceDepth * 5 / 2),
 
     collisionHandler: () => {
 
