@@ -214,7 +214,7 @@ function createText(text, lineNumber) {
       geometry.computeVertexNormals();
 
       let material = new THREE.MeshPhongMaterial({
-        map: createGoldTexture(),
+        map: createGoldTexture(true),
 
         specular: 0xf9d913,
         shininess: 100,
@@ -251,9 +251,9 @@ function createGoldBar(scale) {
       let geometry = new THREE.BoxGeometry(7, 3.625, 1.75);
 
       let rawMaterial = new THREE.MeshPhongMaterial({
-        map: createGoldTexture(),
+        map: createGoldTexture(false),
 
-        specular: 0xf9d913,
+        specular: 0xffd700,
         shininess: 100,
 
         side: THREE.DoubleSide
@@ -285,11 +285,12 @@ function createGoldBar(scale) {
   }
 }
 
-function createGoldTexture() {
-  let texture = THREE.ImageUtils.loadTexture('/media/gold.jpg');
+function createGoldTexture(useOld) {
+  let name = useOld ? '/media/gold.jpg' : '/media/gold1.jpg';
+  let texture = THREE.ImageUtils.loadTexture(name);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(4, 4);
+  texture.repeat.set(1, 1);
   return texture;
 }
 

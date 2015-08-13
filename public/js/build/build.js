@@ -47617,7 +47617,7 @@ function createText(text, lineNumber) {
       geometry.computeVertexNormals();
 
       var material = new THREE.MeshPhongMaterial({
-        map: createGoldTexture(),
+        map: createGoldTexture(true),
 
         specular: 16374035,
         shininess: 100,
@@ -47654,9 +47654,9 @@ function createGoldBar(scale) {
       var geometry = new THREE.BoxGeometry(7, 3.625, 1.75);
 
       var rawMaterial = new THREE.MeshPhongMaterial({
-        map: createGoldTexture(),
+        map: createGoldTexture(false),
 
-        specular: 16374035,
+        specular: 16766720,
         shininess: 100,
 
         side: THREE.DoubleSide
@@ -47688,11 +47688,12 @@ function createGoldBar(scale) {
   }
 }
 
-function createGoldTexture() {
-  var texture = THREE.ImageUtils.loadTexture("/media/gold.jpg");
+function createGoldTexture(useOld) {
+  var name = useOld ? "/media/gold.jpg" : "/media/gold1.jpg";
+  var texture = THREE.ImageUtils.loadTexture(name);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(4, 4);
+  texture.repeat.set(1, 1);
   return texture;
 }
 
